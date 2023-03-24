@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dobby
+  labels:
+    app: dobby
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dobby
+  template:
+    metadata:
+      labels:
+        app: dobby
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-secret-endgame.json: "secret/data/endgame"
+        vault.hashicorp.com/agent-inject-template-endgame.json: |
+          {
+          {{ with secret "secret/data/endgame" -}}
+            "mysecret": "{{ .Data.data.mysecret }}"
+          {{- end}}
+          }
+        vault.hashicorp.com/role: "endgame"
+    spec:
+      serviceAccountName: endgame
+      containers:
+        - name: endgame
+          image: thecasualcoder/dobby
